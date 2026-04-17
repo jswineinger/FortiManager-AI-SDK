@@ -1,0 +1,92 @@
+---
+canonical_id: org.ulysses.noc.fortimanager-object-list/1.0.0
+name: FortiManager Object List
+version: 1.0.0
+description: >
+  Generic GET for ANY FortiManager table. Completes the CRUD primitive set
+  (create / update / delete already generic; this is the L). Supports fields,
+  filter, range, verbose, expand_datasrc (resolve name refs to full data),
+  and FMG options passthrough (get reserved, extra info, etc.). Replaces
+  needing per-type list tools for webfilter/DLP/application/reserved tables.
+status: draft
+
+metadata:
+  org_namespace: ulysses
+  domain: noc
+  intent: discover
+  vendor: fortinet
+  shelf: noc/fortimanager
+  tags: [fortimanager, fmg, crud, list, generic, get, enumerate]
+
+runtime:
+  language: python
+  entry_point: main
+  python_packages: [pyyaml]
+  dotnet_packages: []
+  files: []
+  services: []
+
+parameters:
+  type: object
+  required: [fmg_host, url]
+  properties:
+    fmg_host: {type: string}
+    url:
+      type: string
+      description: >
+        Any FMG table or sub-table URL. Examples:
+          /pm/config/adom/{adom}/obj/webfilter/profile/{name}/ftgd-wf/filters
+          /pm/config/adom/{adom}/obj/dlp/sensor
+          /pm/config/adom/{adom}/obj/application/custom
+          /pm/config/adom/{adom}/_application/list
+          /pm/config/adom/{adom}/obj/webfilter/categories  (with option=get reserved)
+          /pm/config/adom/{adom}/_fdsdb/dlp/sensor
+    fields:
+      type: array
+      items: {type: string}
+      description: "Limit returned fields (massive payload reduction)"
+    filter:
+      type: array
+      description: "Server-side filter, e.g. [['id','in',33,34]] or [['status','==','enable']]"
+    range:
+      type: array
+      description: "[offset, limit] pagination"
+    option:
+      type: array
+      items: {type: string}
+      description: "FMG options: 'get reserved', 'extra info', 'no loadsub', 'scope member'"
+    verbose:
+      type: integer
+      description: "Set 1 for symbolic (string) enum values instead of ints"
+    expand_datasrc:
+      type: array
+      description: >
+        Expand name-reference fields to full referenced-object data. Each entry:
+        {name: <field>, datasrc: [{obj type: <source table>}, ...]}
+      items:
+        type: object
+
+output_schema:
+  type: object
+  properties:
+    success: {type: boolean}
+    url: {type: string}
+    count: {type: integer}
+    data: {}
+    error: {type: string}
+
+credentials:
+  - name: fortimanager
+    type: username_password
+
+capabilities:
+  network:
+    outbound: [{host: "{fmg_host}", port: 443, protocol: https}]
+    inbound: []
+  filesystem:
+    read: ["~/.config/mcp/fortimanager_credentials.yaml"]
+    write: []
+  process:
+    spawn: false
+    elevated: false
+  max_execution_time_ms: 20000
