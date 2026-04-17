@@ -1,0 +1,82 @@
+---
+canonical_id: org.ulysses.noc.fortimanager-field-datasrc/1.0.0
+name: FortiManager Field Datasrc
+version: 1.0.0
+description: >
+  For any FMG object table, ask "what are the valid values I can put in field X?"
+  Uses option=datasrc with an attr parameter. Returns the list of valid objects
+  that FMG will accept as a reference, grouped by source-table category.
+  Essential before creating or updating objects that have cross-table references
+  (e.g. policy.srcaddr must reference a real address or addrgrp).
+status: draft
+
+metadata:
+  org_namespace: ulysses
+  domain: noc
+  intent: discover
+  vendor: fortinet
+  shelf: noc/fortimanager
+  tags: [fortimanager, fmg, datasrc, validation, authoring, meta]
+
+runtime:
+  language: python
+  entry_point: main
+  python_packages: [pyyaml]
+  dotnet_packages: []
+  files: []
+  services: []
+
+parameters:
+  type: object
+  required: [fmg_host, url, attr]
+  properties:
+    fmg_host: {type: string}
+    url:
+      type: string
+      description: >
+        The table URL whose field you want to query. Examples:
+          /pm/config/adom/{adom}/obj/firewall/addrgrp   (ask about 'member')
+          /pm/config/adom/{adom}/pkg/{pkg}/firewall/policy  (ask about 'srcaddr')
+    attr:
+      type: string
+      description: "The field name (within that table) you want valid values for, e.g. 'srcaddr', 'member', 'service'"
+    max_per_category:
+      type: integer
+      default: 50
+      description: "Cap on items per source-table category to keep output manageable"
+
+output_schema:
+  type: object
+  properties:
+    success: {type: boolean}
+    url: {type: string}
+    attr: {type: string}
+    category_count: {type: integer}
+    categories:
+      type: array
+      description: "Source tables that can be referenced; each with sample entries"
+      items:
+        type: object
+        properties:
+          category: {type: string}
+          total: {type: integer}
+          items:
+            type: array
+            items: {type: object}
+    error: {type: string}
+
+credentials:
+  - name: fortimanager
+    type: username_password
+
+capabilities:
+  network:
+    outbound: [{host: "{fmg_host}", port: 443, protocol: https}]
+    inbound: []
+  filesystem:
+    read: ["~/.config/mcp/fortimanager_credentials.yaml"]
+    write: []
+  process:
+    spawn: false
+    elevated: false
+  max_execution_time_ms: 20000

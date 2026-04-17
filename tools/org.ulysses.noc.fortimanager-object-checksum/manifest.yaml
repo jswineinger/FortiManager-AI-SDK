@@ -1,0 +1,73 @@
+---
+canonical_id: org.ulysses.noc.fortimanager-object-checksum/1.0.0
+name: FortiManager Object Checksum
+version: 1.0.0
+description: >
+  Return a change-detection token for a FortiManager table or ADOM. Two modes:
+  chksum (per-table integer version — increments on any change to the table)
+  and devinfo (per-ADOM UUID — changes when anything in the ADOM's object
+  database is modified). Cheap building block for monitor loops and drift
+  detection.
+status: draft
+
+metadata:
+  org_namespace: ulysses
+  domain: noc
+  intent: monitor
+  vendor: fortinet
+  shelf: noc/fortimanager
+  tags: [fortimanager, fmg, checksum, change-detection, drift, audit]
+
+runtime:
+  language: python
+  entry_point: main
+  python_packages: [pyyaml]
+  dotnet_packages: []
+  files: []
+  services: []
+
+parameters:
+  type: object
+  required: [fmg_host, url]
+  properties:
+    fmg_host: {type: string}
+    url:
+      type: string
+      description: >
+        Table URL for `mode: chksum`, or ADOM obj root for `mode: devinfo`.
+        Examples:
+          /pm/config/adom/{adom}/pkg/{pkg}/firewall/policy
+          /pm/config/adom/{adom}/obj/firewall/address
+          /pm/config/adom/{adom}/obj   (with mode=devinfo)
+    mode:
+      type: string
+      enum: [chksum, devinfo]
+      default: chksum
+      description: >
+        chksum  = integer table version (default, per-table granularity).
+        devinfo = ADOM UUID (coarser — any change in the object DB).
+
+output_schema:
+  type: object
+  properties:
+    success: {type: boolean}
+    url: {type: string}
+    mode: {type: string}
+    value: {type: string, description: "Stringified checksum/UUID — compare to prior runs"}
+    error: {type: string}
+
+credentials:
+  - name: fortimanager
+    type: username_password
+
+capabilities:
+  network:
+    outbound: [{host: "{fmg_host}", port: 443, protocol: https}]
+    inbound: []
+  filesystem:
+    read: ["~/.config/mcp/fortimanager_credentials.yaml"]
+    write: []
+  process:
+    spawn: false
+    elevated: false
+  max_execution_time_ms: 10000
