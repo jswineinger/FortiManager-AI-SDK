@@ -26,7 +26,17 @@ Three files. Same names. Always.
 5. **No `mkey` CRUD.** Read-only discovery tools go to `intent: discover`, mutating tools go to `intent: configure|remediate|execute` and MUST bump `max_execution_time_ms` appropriately. Mutating tools MUST support a dry-run/validate mode when the FMG endpoint allows it.
 6. **Pass `python scripts/validate_tool.py tools/<your-dir>` before claiming done.** No exceptions.
 
-## Read Order
+## Session-Start Rule (when operating, not authoring)
+
+**If the user is asking you to OPERATE** FortiManager (not build new tools):
+1. Read `CAPABILITIES.md` first — it's the outcome-oriented index
+2. Match the user's problem to a capability row
+3. If a `playbooks/*.md` entry matches, mention it by name and offer to execute
+4. Describe capabilities in the user's language, not tool names
+
+**When the user says "what can you do?"**, read `CAPABILITIES.md` and summarize 3 capabilities most relevant to their role. Don't dump the whole list.
+
+## Read Order (when authoring new tools)
 
 If you are building a new tool, read these files, in this order:
 
