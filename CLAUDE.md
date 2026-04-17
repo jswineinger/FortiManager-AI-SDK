@@ -31,10 +31,13 @@ Three files. Same names. Always.
 If you are building a new tool, read these files, in this order:
 
 1. `CONTRACT.md` — the formal spec (manifest fields, Python template, Skills.md template)
-2. `docs/FNDN-API-Reference.md` — the FortiManager JSON-RPC endpoint map
-3. `AUTHORING-GUIDE.md` — step-by-step walkthrough with commentary
-4. `tools/org.ulysses.noc.fortimanager-adom-list/` — the reference implementation. Imitate this.
-5. `PARTNER-PROMPTS.md` — prompt patterns for repeatable, high-quality generation
+2. `docs/FNDN-API-Reference.md` — the FortiManager JSON-RPC endpoint map (fast orientation)
+3. `API_reference/README.md` — intake rules for raw Swagger
+4. `API_reference/index.json` — endpoint → raw file catalog
+5. `API_reference/raw/<your-endpoint>.md` — authoritative field names / schemas (MUST consult before writing `execute()`). If missing, STOP and ask the human to dump it — do NOT guess field names.
+6. `AUTHORING-GUIDE.md` — step-by-step walkthrough with commentary
+7. `tools/org.ulysses.noc.fortimanager-adom-list/` — the reference implementation. Imitate this.
+8. `PARTNER-PROMPTS.md` — prompt patterns for repeatable, high-quality generation
 
 If you are onboarding a partner org (e.g. renaming `ulysses` → `acme`):
 
