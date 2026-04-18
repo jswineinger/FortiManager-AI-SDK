@@ -62,6 +62,7 @@ Outcomes you can deliver today:
 |---|---|---|
 | **Live FortiGate state via FMG broker** — interfaces, sessions, CPU, routes, BGP, IPsec — no per-device credentials needed | `device-monitor-proxy` | — |
 | **SD-WAN health snapshot** — live + historical trend in one call | `device-monitor-proxy` + `sdwan-history` | `sdwan-health-check.md` |
+| **SD-WAN config audit** — grade tenant SD-WAN against best practices | `object-list` + `device-monitor-proxy` | `sdwan-config-audit.md` |
 | **Change detection** — "did the policy package change since I last looked?" | `object-checksum` | `mssp-change-detection.md` |
 | **Device reachability + sync status** | `device-list` (conn_status + conf_status) | — |
 
@@ -108,6 +109,8 @@ See `playbooks/` folder:
 | Status | Playbook | Outcome |
 |---|---|---|
 | Built | `sdwan-health-check.md` | Live + historical SD-WAN health snapshot |
+| Built | `sdwan-config-audit.md` | Read-only SD-WAN config grade (zones, members, health-checks, services, neighbors) vs MSSP best practices |
+| Planned | `sdwan-spoke-onboard.md` | Author SD-WAN config end-to-end (3-layer pattern: underlay → overlay → routing) |
 | Planned | `tenant-onboarding.md` | Device blueprint + metadata + policy install |
 | Planned | `security-posture-audit.md` | Policy hygiene + live hit stats |
 | Planned | `mssp-change-detection.md` | Version/checksum drift loop for drift alerts |
