@@ -32,6 +32,7 @@ JSON-RPC Envelope:
 Reference: https://how-to-fortimanager-api.readthedocs.io/en/latest/
 """
 
+import atexit
 import urllib.request
 import urllib.error
 import ssl
@@ -48,6 +49,25 @@ CREDENTIAL_SEARCH_PATHS = [
     os.path.expanduser("~/AppData/Local/mcp"),
     "C:/ProgramData/mcp",
 ]
+
+# Process-level session cache keyed by (host, auth_method, username/token-hint).
+# First call logs in once; subsequent tool calls reuse the same session.
+# Prevents FMG's per-user session cap from being saturated when playbooks
+# chain many tool calls in rapid succession.
+_SESSION_CACHE: dict[tuple, str] = {}
+_CACHED_CLIENTS: list["FortiManagerClient"] = []
+
+
+def _cleanup_sessions() -> None:
+    """atexit: log out any cached session-mode clients so FMG frees the slot."""
+    for c in _CACHED_CLIENTS:
+        try:
+            c.logout()
+        except Exception:
+            pass
+
+
+atexit.register(_cleanup_sessions)
 
 
 def _make_ssl_context(verify: bool = False) -> ssl.SSLContext:
@@ -117,9 +137,15 @@ class FortiManagerClient:
         self.port = port
         self.verify_ssl = verify_ssl
         self.timeout = timeout
-        self.session: Optional[str] = None
         self._req_id = 0
         self.base_url = f"https://{host}:{port}/jsonrpc"
+
+        # Session-pool cache key
+        self._cache_key = (host, self.auth_method, self.username or "_token_")
+        # If a session was already obtained this process, reuse it
+        self.session: Optional[str] = _SESSION_CACHE.get(self._cache_key)
+        if self.auth_method == "session" and self not in _CACHED_CLIENTS:
+            _CACHED_CLIENTS.append(self)
 
     def _next_id(self) -> int:
         self._req_id += 1
@@ -141,10 +167,21 @@ class FortiManagerClient:
             body = e.read().decode("utf-8", errors="replace")
             raise RuntimeError(f"FMG HTTP {e.code}: {body}") from e
 
-    def login(self) -> Optional[str]:
-        """Login (session auth only). Token auth is stateless — no-op."""
+    def login(self, force: bool = False) -> Optional[str]:
+        """Login (session auth only). Token auth is stateless — no-op.
+
+        Reuses a cached process-level session unless force=True. This prevents
+        FMG's per-user session cap from being saturated by playbooks that
+        chain many tool calls.
+        """
         if self.auth_method == "token":
             return None
+        # Reuse cached session for this (host, user) tuple
+        if not force:
+            cached = _SESSION_CACHE.get(self._cache_key)
+            if cached:
+                self.session = cached
+                return cached
         if not (self.username and self.password):
             raise RuntimeError("session auth requires username and password")
         payload = {
@@ -162,6 +199,7 @@ class FortiManagerClient:
         self.session = resp.get("session")
         if not self.session:
             raise RuntimeError("FMG login returned no session token")
+        _SESSION_CACHE[self._cache_key] = self.session
         return self.session
 
     def logout(self) -> None:
@@ -178,6 +216,7 @@ class FortiManagerClient:
         except Exception:
             pass
         self.session = None
+        _SESSION_CACHE.pop(self._cache_key, None)
 
     def call(self, method: str, url: str, data: Optional[dict] = None,
              option: Optional[list] = None, fields: Optional[list] = None,
@@ -216,7 +255,19 @@ class FortiManagerClient:
             payload["session"] = self.session
         if verbose is not None:
             payload["verbose"] = verbose
-        return self._request(payload)
+        resp = self._request(payload)
+        # If the cached session expired, FMG returns -11 on the first call.
+        # Force a fresh login and retry ONCE.
+        if self.auth_method == "session":
+            status = (resp.get("result", [{}])[0] or {}).get("status", {}) or {}
+            if status.get("code") == -11 and "session" in (status.get("message") or "").lower():
+                _SESSION_CACHE.pop(self._cache_key, None)
+                self.session = None
+                self.login(force=True)
+                payload["session"] = self.session
+                payload["id"] = self._next_id()
+                resp = self._request(payload)
+        return resp
 
     def get(self, url: str, fields: Optional[list] = None,
             filter: Optional[list] = None, range: Optional[list] = None,
