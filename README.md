@@ -10,9 +10,9 @@ FortiManager-AI-SDK/
 ├── API_reference/          # FMG Swagger/OpenAPI JSON (drop exports here)
 ├── docs/                   # Markdown guides per workflow
 └── tools/                  # Certified MCP tools, one dir per canonical ID
-    └── org.ulysses.noc.fortimanager-*/
+    └── org.jimw.noc.fortimanager-*/
         ├── manifest.yaml
-        ├── org.ulysses.noc.fortimanager-*.py
+        ├── org.jimw.noc.fortimanager-*.py
         └── Skills.md
 ```
 
@@ -20,11 +20,11 @@ FortiManager-AI-SDK/
 
 | Canonical ID | Purpose |
 |---|---|
-| `org.ulysses.noc.fortimanager-adom-list/1.0.0` | Enumerate ADOMs |
-| `org.ulysses.noc.fortimanager-device-list/1.0.0` | List managed FortiGates in an ADOM |
-| `org.ulysses.noc.fortimanager-policy-package-list/1.0.0` | List policy packages |
-| `org.ulysses.noc.fortimanager-policy-list/1.0.0` | List firewall policies in a package |
-| `org.ulysses.noc.fortimanager-script-run/1.0.0` | Run CLI script against managed device |
+| `org.jimw.noc.fortimanager-adom-list/1.0.0` | Enumerate ADOMs |
+| `org.jimw.noc.fortimanager-device-list/1.0.0` | List managed FortiGates in an ADOM |
+| `org.jimw.noc.fortimanager-policy-package-list/1.0.0` | List policy packages |
+| `org.jimw.noc.fortimanager-policy-list/1.0.0` | List firewall policies in a package |
+| `org.jimw.noc.fortimanager-script-run/1.0.0` | Run CLI script against managed device |
 
 ## Credentials
 
