@@ -1,0 +1,67 @@
+---
+canonical_id: org.jimw.noc.fortimanager-object-count/1.0.0
+name: FortiManager Object Count
+version: 1.0.0
+description: >
+  Return the number of entries in any FortiManager table without fetching the
+  entries themselves. Wraps GET with option=count. Very cheap — one integer
+  response instead of potentially thousands of records. Useful for dashboards,
+  pagination planning, and tenant health metrics.
+status: draft
+
+metadata:
+  org_namespace: jimw
+  domain: noc
+  intent: discover
+  vendor: fortinet
+  shelf: noc/fortimanager
+  tags: [fortimanager, fmg, count, metrics, dashboard, lightweight]
+
+runtime:
+  language: python
+  entry_point: main
+  python_packages: [pyyaml]
+  dotnet_packages: []
+  files: []
+  services: []
+
+parameters:
+  type: object
+  required: [fmg_host, url]
+  properties:
+    fmg_host: {type: string}
+    url:
+      type: string
+      description: >
+        Any FMG table URL. Examples:
+          /pm/config/adom/{adom}/obj/firewall/address
+          /pm/config/adom/{adom}/obj/firewall/service/custom
+          /pm/config/adom/{adom}/pkg/{pkg}/firewall/policy
+          /dvmdb/adom/{adom}/device
+    filter:
+      type: array
+      description: "Optional server-side filter, e.g. [['type','==',0]]"
+
+output_schema:
+  type: object
+  properties:
+    success: {type: boolean}
+    url: {type: string}
+    count: {type: integer}
+    error: {type: string}
+
+credentials:
+  - name: fortimanager
+    type: username_password
+
+capabilities:
+  network:
+    outbound: [{host: "{fmg_host}", port: 443, protocol: https}]
+    inbound: []
+  filesystem:
+    read: ["~/.config/mcp/fortimanager_credentials.yaml"]
+    write: []
+  process:
+    spawn: false
+    elevated: false
+  max_execution_time_ms: 10000

@@ -1,0 +1,110 @@
+---
+canonical_id: org.jimw.noc.fortimanager-object-schema/1.0.0
+name: FortiManager Object Schema
+version: 1.0.0
+description: >
+  Introspect the schema of any FortiManager table or object via option=syntax.
+  Returns the full field definition tree — field names, types, defaults, enum
+  options, max sizes, and datasrc references. Lets AI self-discover how to
+  build any FortiGate object without prior documentation. Foundation tool for
+  AI-authored CRUD tools across every FortiOS resource type.
+status: draft
+
+metadata:
+  org_namespace: jimw
+  domain: noc
+  intent: discover
+  vendor: fortinet
+  shelf: noc/fortimanager
+  tags: [fortimanager, fmg, schema, syntax, introspection, meta, authoring]
+
+runtime:
+  language: python
+  entry_point: main
+  python_packages: [pyyaml]
+  dotnet_packages: []
+  files: []
+  services: []
+
+parameters:
+  type: object
+  required: [fmg_host, url]
+  properties:
+    fmg_host: {type: string}
+    url:
+      type: string
+      description: >
+        Table URL whose schema to introspect. Can target a specific leaf table
+        or a parent category. Examples:
+          /pm/config/adom/{adom}/obj/firewall/address     (single table)
+          /pm/config/adom/{adom}/obj                      (all ADOM object tables)
+          /pm/config/adom/{adom}/pkg/{pkg}/firewall/policy (policy schema)
+          /pm/config/device/{device}/global/system/global (device-level schema)
+    summarize:
+      type: boolean
+      default: true
+      description: >
+        When true (default), return a flat field summary with types, defaults,
+        datasrc refs, and enum options for easy AI consumption. When false,
+        return the raw FMG syntax tree verbatim.
+    include_help:
+      type: boolean
+      default: false
+      description: Include FMG 'help' text per field (verbose but useful for docs)
+
+output_schema:
+  type: object
+  properties:
+    success: {type: boolean}
+    url: {type: string}
+    table_name: {type: string}
+    alimit:
+      type: integer
+      description: "Max number of entries FMG allows in this table"
+    field_count: {type: integer}
+    required_datasrc_fields:
+      type: array
+      description: "Fields that reference OTHER tables (have no defaults — must be supplied by caller)"
+      items:
+        type: object
+        properties:
+          name: {type: string}
+          refs:
+            type: array
+            items:
+              type: object
+              properties:
+                category: {type: string}
+                mkey: {type: string}
+    fields:
+      type: array
+      description: "Flat list of fields when summarize=true"
+      items:
+        type: object
+        properties:
+          name: {type: string}
+          type: {type: string}
+          default: {}
+          options: {type: object}
+          max: {type: integer}
+          datasrc_refs: {type: array}
+          excluded: {type: boolean}
+          help: {type: string}
+    raw: {type: object, description: "Raw syntax tree when summarize=false"}
+    error: {type: string}
+
+credentials:
+  - name: fortimanager
+    type: username_password
+
+capabilities:
+  network:
+    outbound: [{host: "{fmg_host}", port: 443, protocol: https}]
+    inbound: []
+  filesystem:
+    read: ["~/.config/mcp/fortimanager_credentials.yaml"]
+    write: []
+  process:
+    spawn: false
+    elevated: false
+  max_execution_time_ms: 15000
